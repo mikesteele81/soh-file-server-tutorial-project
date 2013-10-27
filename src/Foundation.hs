@@ -41,7 +41,10 @@ type Store = IntMap StoredFile
 -- | This is the application\'s "foundation" type. The first argument to 'App'
 -- is the next identifier to be used when a new file is uploaded. The second
 -- is a mapping from identifiers to files.
-data App = App (TVar Int) (TVar Store)
+data App = App
+    { tnextId :: TVar Int
+    , tstore :: TVar Store
+    }
 
 instance Yesod App where
   -- This method is customized so that global CSS styling can be defined in
@@ -66,33 +69,33 @@ mkYesodData "App" $(parseRoutesFile "config/routes")
 -- file. This should be the only function that manipulates the value stored in
 -- the 'App' data constructor\'s first argument.
 getNextId :: App -> STM Int
-getNextId (App tnextId _) = do
-    nextId <- readTVar tnextId
-    writeTVar tnextId $ nextId + 1
+getNextId app = do
+    nextId <- readTVar $ tnextId app
+    writeTVar (tnextId app) $ nextId + 1
     return nextId
 
 -- | Generate a list of file's and identifiers. This is used on the main page
 -- to generate links to preview pages.
 getList :: Handler [(Int, StoredFile)]
 getList = do
-    App _ tstore <- getYesod
-    store <- liftIO $ readTVarIO tstore
+    app <- getYesod
+    store <- liftIO . readTVarIO $ tstore app
     return $ IntMap.toList store
 
 -- | Add a new file to the 'Store'.
 addFile :: StoredFile -> Handler ()
 addFile file = do
-    app@(App _ tstore) <- getYesod
+    app <- getYesod
     liftIO . atomically $ do
         ident <- getNextId app
-        modifyTVar tstore $ IntMap.insert ident file
+        modifyTVar (tstore app) $ IntMap.insert ident file
 
 -- | Retrieve a file from the application\'s 'Store'. In the case where the
 -- file does not exist a 404 error will be returned.
 getById :: Int -> Handler StoredFile
 getById ident = do
-    App _ tstore <- getYesod
-    store <- liftIO $ readTVarIO tstore
+    app <- getYesod
+    store <- liftIO . readTVarIO $ tstore app
     case IntMap.lookup ident store of
       Nothing -> notFound
       Just file -> return file
