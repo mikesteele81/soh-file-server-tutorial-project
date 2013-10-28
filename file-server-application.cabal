@@ -21,8 +21,10 @@ executable file-processor
     , containers
     , data-default
     , hamlet
+    , monad-logger
     , persistent
     , persistent-sqlite
+    , resourcet
     , safe
     , shakespeare-css
     , stm
