@@ -4,6 +4,8 @@
 module Main where
 
 import Control.Concurrent.STM
+import Control.Monad.Logger
+import Control.Monad.Trans.Resource
 import Data.IntMap
 import Database.Persist.Sql
 import Yesod
@@ -11,6 +13,7 @@ import Yesod
 import Config
 import Dispatch ()
 import Foundation
+import Model (migrateAll)
 
 main :: IO ()
 main = do
@@ -18,6 +21,8 @@ main = do
     -- `persistConfig` actually is. Only the associated `PersistConfig`
     -- instance is needed.
     pool <- createPoolConfig persistConfig
+    runResourceT $ runStderrLoggingT $ flip runSqlPool pool
+        $ runMigration migrateAll
     -- Initialize the filestore to an empty map.
     tstore <- atomically $ newTVar empty
     -- The first uploaded file should have an ID of 0.
