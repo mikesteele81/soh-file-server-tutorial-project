@@ -19,6 +19,10 @@ import Text.Hamlet
 import Yesod
 import Yesod.Default.Util
 
+-- The Config module is needed so that we can integrate 'persistent' with
+-- 'yesod-core'.
+import Config
+
 -- | Extend this record to hold any information about uploaded files that you
 -- need. Examples might be the time at which a file was uploaded, or the
 -- identifier of the user account that added it.
@@ -63,6 +67,19 @@ instance Yesod App where
 -- controls.
 instance RenderMessage App FormMessage where
   renderMessage _ _ = defaultFormMessage
+
+-- YesodPersist is used so that we can call `runDB` from within handler
+-- actions. It is almost possible to be defined automatically, so there
+-- is a `defaultRunDB` utility function to help us. We only need to tell
+-- it where to look for our persintent configuration and connection pool.
+instance YesodPersist App where
+  type YesodPersistBackend App = SqlBackend
+  runDB action = defaultRunDB (const persistConfig) connPool action
+
+-- We won't make use of `YesodPersistRunner` in this application. Like
+-- `YesodPersist`, it is almost possible to be defined automatically.
+instance YesodPersistRunner App where
+  getDBRunner = defaultGetDBRunner connPool
 
 -- Calling 'mkYesodData' generates boilerplate code and type aliases for
 -- interfacing our foundation type with Yesod. The "Dispatch" module contains
