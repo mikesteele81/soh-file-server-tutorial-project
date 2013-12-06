@@ -80,8 +80,9 @@ getList = do
     return $ IntMap.toList store
 
 -- | Add a new file to the 'Store'.
-addFile :: App -> StoredFile -> Handler ()
-addFile app@(App _ tstore) file =
+addFile :: StoredFile -> Handler ()
+addFile file = do
+    app@(App _ tstore) <- getYesod
     liftIO . atomically $ do
         ident <- getNextId app
         modifyTVar tstore $ IntMap.insert ident file

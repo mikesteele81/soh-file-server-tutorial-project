@@ -41,12 +41,12 @@ postHomeR = do
     case result of
       -- fi is a 'FileInfo'
       FormSuccess fi -> do
-        app <- getYesod
         -- Extract the file's raw contents into a lazy bytestring. Despite the
         -- type being lazy, calling 'sinkLbs' will fully evaluate the file
         -- contents.
         fileBytes <- runResourceT $ fileSource fi $$ sinkLbs
-        addFile app $ StoredFile (fileName fi) (fileContentType fi) fileBytes
+        addFile $ StoredFile (fileName fi) (fileContentType fi)
+                             fileBytes
       _ -> return ()
     -- Users will see an updated file listing in the case of a successful
     -- upload. Should an error occur or invalid form data be supplied the list
