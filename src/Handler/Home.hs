@@ -15,6 +15,7 @@ import Yesod
 import Yesod.Default.Util
 
 import Foundation
+import Model
 
 getHomeR :: Handler Html
 getHomeR = do

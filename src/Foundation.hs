@@ -7,13 +7,7 @@
 -- is stored.
 module Foundation where
 
-import Control.Concurrent.STM
-import Data.ByteString (ByteString)
 import Data.Default
-import Data.IntMap (IntMap)
-import qualified Data.IntMap as IntMap
-import Data.Text (Text)
-import qualified Data.Text as Text
 import Database.Persist.Sql
 import Text.Hamlet
 import Yesod
@@ -22,34 +16,13 @@ import Yesod.Default.Util
 -- The Config module is needed so that we can integrate 'persistent' with
 -- 'yesod-core'.
 import Config
-
--- | Extend this record to hold any information about uploaded files that you
--- need. Examples might be the time at which a file was uploaded, or the
--- identifier of the user account that added it.
---
--- All of these fields are initialized in the HomeR route's POST handler.
-data StoredFile = StoredFile
-    { -- | The file's name as it was supplied by the user's web browser.
-      sfFilename :: !Text
-    , -- | A MIME type. This is copied from the POST request verbatim. It is
-      -- then supplied is the Content-Type header when the file is
-      -- downloaded.
-      sfContentType :: !Text
-    , -- | This field contains the raw stream of bytes that were uploaded in
-      -- the HomeR route's POST handler.
-      sfFileBytes :: !ByteString
-    }
-
--- | A collection of uploaded files keyed on a unique 'Int' identifier.
-type Store = IntMap StoredFile
+import Model
 
 -- | This is the application\'s "foundation" type. The first argument to 'App'
 -- is the next identifier to be used when a new file is uploaded. The second
 -- is a mapping from identifiers to files.
 data App = App
-    { tnextId :: TVar Int
-    , tstore :: TVar Store
-    , connPool :: ConnectionPool
+    { connPool :: ConnectionPool
     -- ^Handle to an open database connection. This is initialized in `main`.
     -- It is accessed by the `YesodPersist` instance so that we can call
     -- `runDB` to execute database queries.
@@ -87,37 +60,20 @@ instance YesodPersistRunner App where
 -- generation.
 mkYesodData "App" $(parseRoutesFile "config/routes")
 
--- | Use this function to generate a unique identifier for a newly uploaded
--- file. This should be the only function that manipulates the value stored in
--- the 'App' data constructor\'s first argument.
-getNextId :: App -> STM Int
-getNextId app = do
-    nextId <- readTVar $ tnextId app
-    writeTVar (tnextId app) $ nextId + 1
-    return nextId
-
 -- | Generate a list of file's and identifiers. This is used on the main page
 -- to generate links to preview pages.
-getList :: Handler [(Int, StoredFile)]
-getList = do
-    app <- getYesod
-    store <- liftIO . readTVarIO $ tstore app
-    return $ IntMap.toList store
+getList :: Handler [Entity StoredFile]
+getList = runDB $ selectList [] []
 
 -- | Add a new file to the 'Store'.
 addFile :: StoredFile -> Handler ()
-addFile file = do
-    app <- getYesod
-    liftIO . atomically $ do
-        ident <- getNextId app
-        modifyTVar (tstore app) $ IntMap.insert ident file
+addFile file = runDB $ insert_ file
 
 -- | Retrieve a file from the application\'s 'Store'. In the case where the
 -- file does not exist a 404 error will be returned.
-getById :: Int -> Handler StoredFile
+getById :: Key StoredFile -> Handler StoredFile
 getById ident = do
-    app <- getYesod
-    store <- liftIO . readTVarIO $ tstore app
-    case IntMap.lookup ident store of
+    mfile <- runDB $ get ident
+    case mfile of
       Nothing -> notFound
       Just file -> return file

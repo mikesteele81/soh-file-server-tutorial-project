@@ -1,4 +1,11 @@
+
 StoredFile
+    -- The file's name as it was supplied by the user's web browser.
     name Text
+    -- A MIME type. This is copied from the POST request verbatim. It is
+    -- then supplied is the Content-Type header when the file is
+    -- downloaded.
     contentType Text
+    -- This field contains the raw stream of bytes that were uploaded in
+    -- the HomeR route's POST handler.
     content ByteString

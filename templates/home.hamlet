@@ -3,7 +3,7 @@ $if null storedFiles
   <p>No files have been uploaded yet.
 $else
   <ul>
-    $forall (ident, StoredFile filename _ _) <- storedFiles
+    $forall (Entity ident (StoredFile filename _ _)) <- storedFiles
       <li>
         <a href=@{PreviewR ident}>#{filename}
 <h2>Submit new file

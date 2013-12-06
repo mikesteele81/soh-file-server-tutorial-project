@@ -18,7 +18,6 @@ executable file-processor
     , blaze-markup
     , bytestring
     , conduit
-    , containers
     , data-default
     , hamlet
     , monad-logger
@@ -27,6 +26,5 @@ executable file-processor
     , resourcet
     , safe
     , shakespeare-css
-    , stm
     , text
     , yesod
