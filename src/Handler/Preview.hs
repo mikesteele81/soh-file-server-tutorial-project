@@ -6,12 +6,11 @@
 module Handler.Preview where
 
 import Control.Exception hiding (Handler)
-import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString as SB
 import Data.Default
 import Data.Text (Text)
 import qualified Data.Text as Text
-import qualified Data.Text.Lazy as LT
-import qualified Data.Text.Lazy.Encoding as LT
+import qualified Data.Text.Encoding as Text
 import Text.Blaze
 import Yesod
 import Yesod.Default.Util
@@ -28,7 +27,7 @@ getPreviewR ident = do
         $(widgetFileNoReload def "preview")
 
 -- | Generate a block of HTML to include in the preview section.
-preview :: Int -> Text -> LB.ByteString -> IO Widget
+preview :: Int -> Text -> SB.ByteString -> IO Widget
 preview ident contentType bytes
   -- Image files have a MIME type starting with "image" by convention.
   | "image/" `Text.isPrefixOf` contentType =
@@ -39,7 +38,7 @@ preview ident contentType bytes
     -- are encoded as UTF-8 are displayed. The 'decodeUtf8' function is pure,
     -- but throws an exception in the IO monad when an error is
     -- encountered.
-    eText <- try . evaluate $ LT.decodeUtf8 bytes :: IO (Either SomeException LT.Text)
+    eText <- try . evaluate $ Text.decodeUtf8 bytes :: IO (Either SomeException Text)
     return $ case eText of
       Left _ -> errorMessage
       Right text -> [whamlet|<pre>#{text}|]

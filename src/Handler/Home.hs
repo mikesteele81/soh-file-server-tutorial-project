@@ -6,6 +6,7 @@
 module Handler.Home where
 
 import Control.Monad.Trans.Resource
+import qualified Data.ByteString as S
 import qualified Data.ByteString.Lazy as L
 import Data.Conduit
 import Data.Conduit.Binary
@@ -41,12 +42,13 @@ postHomeR = do
     case result of
       -- fi is a 'FileInfo'
       FormSuccess fi -> do
-        -- Extract the file's raw contents into a lazy bytestring. Despite the
-        -- type being lazy, calling 'sinkLbs' will fully evaluate the file
-        -- contents.
+        -- Extract the file's raw contents into a strict bytestring. Calling
+        -- 'sinkLbs' would fully evaluate the file contents even if we were
+        -- using lazy bytestrings. Older versions of 'bytestring' don't include
+        -- functions to convert between strict and lazy variants.
         fileBytes <- runResourceT $ fileSource fi $$ sinkLbs
         addFile $ StoredFile (fileName fi) (fileContentType fi)
-                             fileBytes
+                             (S.pack . L.unpack $ fileBytes)
       _ -> return ()
     -- Users will see an updated file listing in the case of a successful
     -- upload. Should an error occur or invalid form data be supplied the list

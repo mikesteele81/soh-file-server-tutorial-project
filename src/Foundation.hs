@@ -8,7 +8,7 @@
 module Foundation where
 
 import Control.Concurrent.STM
-import Data.ByteString.Lazy (ByteString)
+import Data.ByteString (ByteString)
 import Data.Default
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
