@@ -21,6 +21,8 @@ executable file-processor
     , containers
     , data-default
     , hamlet
+    , persistent
+    , persistent-sqlite
     , safe
     , shakespeare-css
     , stm

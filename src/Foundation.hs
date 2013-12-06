@@ -14,6 +14,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import Data.Text (Text)
 import qualified Data.Text as Text
+import Database.Persist.Sql
 import Text.Hamlet
 import Yesod
 import Yesod.Default.Util
@@ -44,6 +45,10 @@ type Store = IntMap StoredFile
 data App = App
     { tnextId :: TVar Int
     , tstore :: TVar Store
+    , connPool :: ConnectionPool
+    -- ^Handle to an open database connection. This is initialized in `main`.
+    -- It is accessed by the `YesodPersist` instance so that we can call
+    -- `runDB` to execute database queries.
     }
 
 instance Yesod App where
